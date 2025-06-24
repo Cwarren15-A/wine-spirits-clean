@@ -3,6 +3,7 @@ import { SimpleWineScraper } from './scrapers/simple-scraper';
 import { DatabaseManager } from './utils/database';
 import { logStats } from './utils/helpers';
 import { WineData, ScrapingResult } from './types/wine';
+import { generateLargeDataset } from './scrapers/ai-data-generator';
 
 // Load environment variables
 dotenv.config({ path: '.env' });
@@ -156,29 +157,129 @@ class WineScrapeManager {
 // CLI functionality
 async function main() {
   const args = process.argv.slice(2);
-  const manager = new WineScrapeManager();
+  const command = args[0];
+  const subCommand = args[1];
+  const param = args[2];
 
-  if (args.length === 0) {
-    // Default: scrape all
-    await manager.scrapeAll();
-  } else if (args[0] === 'specific' && args.length >= 3) {
-    // Specific scraping: node index.js specific simple "bordeaux wine"
-    const source = args[1] as 'simple';
-    const query = args[2];
-    await manager.scrapeSpecific(source, query);
-  } else if (args[0] === 'test') {
-    // Test mode: scrape without inserting to DB
-    await manager.scrapeAll({
-      queries: ['bordeaux wine'],
-      maxResults: 10,
-      insertToDB: false
-    });
-  } else {
-    console.log('Usage:');
-    console.log('  npm run dev                           # Scrape all sources');
-    console.log('  npm run dev test                      # Test mode (no DB)');
-    console.log('  npm run dev specific simple "query"   # Scrape specific source');
+  const dbManager = new DatabaseManager();
+
+  switch (command) {
+    case 'test':
+      console.log('🧪 Testing database connection...');
+      const testResult = await dbManager.testConnection();
+      if (testResult.success) {
+        console.log('✅ Database connection successful');
+      } else {
+        console.error('❌ Database connection failed:', testResult.error);
+      }
+      break;
+
+    case 'count':
+      console.log('📊 Counting products in database...');
+      const count = await dbManager.getProductCount();
+      console.log(`📊 Total products in database: ${count}`);
+      break;
+
+    case 'sample':
+      const sampleCount = parseInt(param) || 10;
+      console.log(`📋 Fetching ${sampleCount} sample products...`);
+      const samples = await dbManager.getSampleProducts(sampleCount);
+      console.log('📋 Sample products:');
+      samples.forEach((product, index) => {
+        console.log(`${index + 1}. ${product.name} - ${product.type} - $${product.current_price} (${product.region})`);
+      });
+      break;
+
+    case 'generate':
+      const wineCount = parseInt(args[1]) || 500;
+      const spiritsCount = parseInt(args[2]) || 300;
+      
+      console.log(`🤖 Generating ${wineCount} wines and ${spiritsCount} spirits...`);
+      
+      // First clear existing AI-generated data
+      console.log('🧹 Clearing existing AI-generated products...');
+      await dbManager.clearAIGeneratedProducts();
+      
+      // Generate new data
+      const generatedData = await generateLargeDataset(wineCount, spiritsCount);
+      
+      console.log(`💾 Inserting ${generatedData.length} products into database...`);
+      
+      // Create a default seller if needed
+      const sellerId = await dbManager.ensureDefaultSeller();
+      
+      // Insert the data
+      const result = await dbManager.insertWineData(generatedData, sellerId);
+      
+      console.log(`✅ Successfully inserted ${result.success} products`);
+      if (result.failed > 0) {
+        console.log(`⚠️  Failed to insert ${result.failed} products`);
+      }
+      
+      console.log('\n🍷 LARGE DATASET GENERATION COMPLETE');
+      console.log(`=== STATS ===`);
+      console.log(`✅ Generated: ${generatedData.length} products`);
+      console.log(`✅ Inserted: ${result.success} products`);
+      console.log(`❌ Failed: ${result.failed} products`);
+      break;
+
+    case 'scrape':
+      const scraper = new SimpleWineScraper();
+      
+      console.log('🕷️  Starting wine scraping...');
+      
+      const scrapingResult = await scraper.generateSampleData();
+      
+      if (scrapingResult.success && scrapingResult.data) {
+        console.log(`💾 Inserting ${scrapingResult.data.length} scraped products...`);
+        
+        const sellerId = await dbManager.ensureDefaultSeller();
+        const insertResult = await dbManager.insertWineData(scrapingResult.data, sellerId);
+        
+        console.log(`✅ Successfully inserted ${insertResult.success} products`);
+        if (insertResult.failed > 0) {
+          console.log(`⚠️  Failed to insert ${insertResult.failed} products`);
+        }
+      } else {
+        console.error('❌ Scraping failed:', scrapingResult.error);
+      }
+      break;
+
+    case 'clear':
+      if (subCommand === 'all') {
+        console.log('🗑️  Clearing ALL products from database...');
+        await dbManager.clearAllProducts();
+        console.log('✅ All products cleared');
+      } else if (subCommand === 'ai') {
+        console.log('🗑️  Clearing AI-generated products from database...');
+        await dbManager.clearAIGeneratedProducts();
+        console.log('✅ AI-generated products cleared');
+      } else {
+        console.log('Usage: npm run dev clear [all|ai]');
+      }
+      break;
+
+    default:
+      console.log('🍷 Wine & Spirits Scraper');
+      console.log('');
+      console.log('Available commands:');
+      console.log('  test                    - Test database connection');
+      console.log('  count                   - Count products in database');
+      console.log('  sample [number]         - Show sample products');
+      console.log('  generate [wines] [spirits] - Generate large realistic dataset');
+      console.log('    Example: generate 1000 500  (1000 wines, 500 spirits)');
+      console.log('  scrape                  - Run basic scraper');
+      console.log('  clear all              - Clear all products');
+      console.log('  clear ai               - Clear only AI-generated products');
+      console.log('');
+      console.log('Examples:');
+      console.log('  npm run dev test');
+      console.log('  npm run dev generate 1000 500');
+      console.log('  npm run dev count');
+      break;
   }
+
+  process.exit(0);
 }
 
 // Run if called directly
