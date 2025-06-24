@@ -30,6 +30,8 @@ export function ProductSearch({ initialProducts, initialFilters }: ProductSearch
 
   const applyFilters = () => {
     let filtered = initialProducts;
+    console.log('Applying filters to', initialProducts.length, 'products');
+    console.log('Current filters:', filters);
 
     if (searchQuery) {
       filtered = filtered.filter(product =>
@@ -68,6 +70,7 @@ export function ProductSearch({ initialProducts, initialFilters }: ProductSearch
       filtered = filtered.filter(product => (product.average_rating || 0) >= minRating);
     }
 
+    console.log('Filtered to', filtered.length, 'products');
     setProducts(filtered);
   };
 

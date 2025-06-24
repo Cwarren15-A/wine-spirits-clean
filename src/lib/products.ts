@@ -3,18 +3,26 @@ import { type Product } from './api';
 
 export async function getFeaturedProducts(): Promise<Product[]> {
   try {
-    console.log('Attempting to fetch products from database...');
+    console.log('🍷 getFeaturedProducts() starting...');
     
     // Check environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    console.log('Supabase URL exists:', !!supabaseUrl);
-    console.log('Supabase Key exists:', !!supabaseKey);
+    console.log('🔑 Environment check:');
+    console.log('  Supabase URL exists:', !!supabaseUrl);
+    console.log('  Supabase Key exists:', !!supabaseKey);
+    console.log('  URL preview:', supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'undefined');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('⚠️ Missing Supabase credentials, falling back to static data');
+      return getStaticProducts();
+    }
     
     // Get products from database - increased limit to show all products
+    console.log('📡 Calling SupabaseService.getProducts(1000)...');
     const dbProducts = await SupabaseService.getProducts(1000);
-    console.log(`Successfully fetched ${dbProducts.length} products from database`);
+    console.log(`✅ Successfully fetched ${dbProducts?.length || 0} products from database`);
     
     return dbProducts.map((product): Product => ({
       id: product.id,
@@ -66,22 +74,31 @@ export async function getFeaturedProducts(): Promise<Product[]> {
       }
     }));
   } catch (error) {
-    console.error('Error fetching products from database:', error);
+    console.error('❌ Error in getFeaturedProducts():', error);
+    console.error('❌ Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error
+    });
     
     // Fallback to static products if database fails
-    console.log('Falling back to static products...');
-    return getStaticProducts();
+    console.log('🔄 Falling back to static products...');
+    const staticProducts = getStaticProducts();
+    console.log(`📊 Returning ${staticProducts.length} static products as fallback`);
+    return staticProducts;
   }
 }
 
 // Keep the static version as backup/fallback
 export function getStaticProducts(): Product[] {
   try {
+    console.log('📁 Loading static products from file...');
     // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
     const productsData = require('../../products');
     const products = productsData.products || productsData.default?.products || [];
+    console.log(`📊 Found ${products.length} products in static file, using first 80`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return products.slice(0, 50).map((product: any): Product => ({
+    return products.slice(0, 80).map((product: any): Product => ({
       id: product.id,
       name: product.name,
       type: product.category === 'wine' ? 'wine' : 'spirits',

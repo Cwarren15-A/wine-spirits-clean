@@ -100,13 +100,25 @@ export class SupabaseService {
   
   // Product Operations
   static async getProducts(limit = 100) {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .limit(limit)
+    console.log(`🔍 SupabaseService.getProducts() called with limit: ${limit}`);
     
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .limit(limit)
+      
+      if (error) {
+        console.error('❌ Supabase query error:', error);
+        throw error;
+      }
+      
+      console.log(`✅ Successfully fetched ${data?.length || 0} products from Supabase`);
+      return data || [];
+    } catch (error) {
+      console.error('❌ SupabaseService.getProducts() error:', error);
+      throw error;
+    }
   }
   
   static async getProduct(id: string) {
@@ -120,7 +132,7 @@ export class SupabaseService {
     return data
   }
   
-  static async searchProducts(query: string, filters?: any) {
+  static async searchProducts(query: string, filters?: Record<string, unknown>) {
     let queryBuilder = supabase
       .from('products')
       .select('*')
@@ -229,7 +241,7 @@ export class SupabaseService {
   }
   
   // Real-time Subscriptions
-  static subscribeToOrderBook(productId: string, callback: (payload: any) => void) {
+  static subscribeToOrderBook(productId: string, callback: (payload: unknown) => void) {
     return supabase
       .channel(`order_book_${productId}`)
       .on(
@@ -245,7 +257,7 @@ export class SupabaseService {
       .subscribe()
   }
   
-  static subscribeToPriceUpdates(callback: (payload: any) => void) {
+  static subscribeToPriceUpdates(callback: (payload: unknown) => void) {
     return supabase
       .channel('price_updates')
       .on(
