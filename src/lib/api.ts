@@ -93,7 +93,7 @@ export const productApi = {
     
     // Import products dynamically to avoid circular dependencies
     const { getFeaturedProducts } = await import('./products');
-    const products = getFeaturedProducts();
+    const products = await getFeaturedProducts();
     const product = products.find(p => p.id === id);
     
     if (!product) {
@@ -107,7 +107,7 @@ export const productApi = {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     const { getFeaturedProducts } = await import('./products');
-    const products = getFeaturedProducts();
+    const products = await getFeaturedProducts();
     
     if (!query) return products.slice(0, 10);
     
