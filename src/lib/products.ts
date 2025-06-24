@@ -3,16 +3,9 @@ import { type Product } from './api';
 
 export async function getFeaturedProducts(): Promise<Product[]> {
   try {
-    console.log('🍷 getFeaturedProducts() starting...');
-    
     // Check environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    console.log('🔑 Environment check:');
-    console.log('  Supabase URL exists:', !!supabaseUrl);
-    console.log('  Supabase Key exists:', !!supabaseKey);
-    console.log('  URL preview:', supabaseUrl ? supabaseUrl.substring(0, 30) + '...' : 'undefined');
     
     if (!supabaseUrl || !supabaseKey) {
       console.warn('⚠️ Missing Supabase credentials, falling back to static data');
@@ -20,7 +13,6 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     }
     
     // Get products from database - increased limit to show all products
-    console.log('📡 Calling SupabaseService.getProducts(1000)...');
     const dbProducts = await SupabaseService.getProducts(1000);
     console.log(`✅ Successfully fetched ${dbProducts?.length || 0} products from database`);
     

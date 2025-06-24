@@ -25,13 +25,37 @@ export function ProductSearch({ initialProducts, initialFilters }: ProductSearch
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
+
+  useEffect(() => {
     applyFilters();
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, initialProducts]);
 
   const applyFilters = () => {
     let filtered = initialProducts;
-    console.log('Applying filters to', initialProducts.length, 'products');
-    console.log('Current filters:', filters);
+    console.log('🔍 Applying filters to', initialProducts.length, 'products');
+    console.log('📋 Current filters:', filters);
+    console.log('🔎 Search query:', searchQuery);
+
+    // Check if any filters are actually set
+    const hasActiveFilters = searchQuery || 
+      filters.type || 
+      filters.region || 
+      filters.varietal || 
+      filters.priceMin || 
+      filters.priceMax || 
+      filters.vintage || 
+      filters.rating;
+
+    console.log('🎯 Has active filters:', hasActiveFilters);
+
+    // If no filters are set, show all products
+    if (!hasActiveFilters) {
+      console.log('✅ No filters active, showing all', initialProducts.length, 'products');
+      setProducts(initialProducts);
+      return;
+    }
 
     if (searchQuery) {
       filtered = filtered.filter(product =>

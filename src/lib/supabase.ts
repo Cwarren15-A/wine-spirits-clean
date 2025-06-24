@@ -100,8 +100,6 @@ export class SupabaseService {
   
   // Product Operations
   static async getProducts(limit = 100) {
-    console.log(`🔍 SupabaseService.getProducts() called with limit: ${limit}`);
-    
     try {
       const { data, error } = await supabase
         .from('products')
@@ -109,14 +107,13 @@ export class SupabaseService {
         .limit(limit)
       
       if (error) {
-        console.error('❌ Supabase query error:', error);
+        console.error('Supabase query error:', error);
         throw error;
       }
       
-      console.log(`✅ Successfully fetched ${data?.length || 0} products from Supabase`);
       return data || [];
     } catch (error) {
-      console.error('❌ SupabaseService.getProducts() error:', error);
+      console.error('SupabaseService.getProducts() error:', error);
       throw error;
     }
   }

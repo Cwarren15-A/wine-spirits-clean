@@ -47,6 +47,17 @@ export function MarketplaceClient() {
       rating: searchParams.get('rating') || '',
     };
 
+    console.log('🌐 URL search params:', {
+      type: searchParams.get('type'),
+      region: searchParams.get('region'),
+      varietal: searchParams.get('varietal'),
+      priceMin: searchParams.get('priceMin'),
+      priceMax: searchParams.get('priceMax'),
+      vintage: searchParams.get('vintage'),
+      rating: searchParams.get('rating'),
+    });
+    console.log('🎛️ Initial filters being set:', filters);
+
     setInitialFilters(filters);
   }, [searchParams]);
 
