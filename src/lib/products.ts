@@ -27,7 +27,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
       base_price: product.base_price,
       current_price: product.current_price,
       available_quantity: product.available_quantity || Math.floor(Math.random() * 20) + 1,
-      primary_image_url: product.primary_image_url || `/images/${product.type === 'wine' ? 'wines' : 'spirits'}/default.jpg`,
+      primary_image_url: product.primary_image_url || `/images/${product.type === 'wine' ? 'wines' : 'spirits'}/default.svg`,
       description: product.description || product.tasting_notes || 'Premium vintage with exceptional quality.',
       tasting_notes: product.tasting_notes,
       investment_potential: 'Blue-chip collectible with strong demand and limited availability.',
