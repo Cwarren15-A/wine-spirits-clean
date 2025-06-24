@@ -23,8 +23,18 @@ export function MarketplaceClient() {
 
   useEffect(() => {
     // Get featured products for initial display
-    const products = getFeaturedProducts();
-    setFeaturedProducts(products);
+    async function loadProducts() {
+      try {
+        const products = await getFeaturedProducts();
+        setFeaturedProducts(products);
+      } catch (error) {
+        console.error('Failed to load products:', error);
+        // Fall back to empty array if database fails
+        setFeaturedProducts([]);
+      }
+    }
+    
+    loadProducts();
 
     // Extract URL parameters for initial filters
     const filters: InitialFilters = {
